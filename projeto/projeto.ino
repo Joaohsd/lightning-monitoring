@@ -22,13 +22,10 @@ bool _pirEnabled = false;
 unsigned long _now;
 unsigned long _pirTime = 0;
 
-// Acs712
-float currentSum;
-float currentMean;
-float currentVoltage;
-float current;
+float _current;
+float _voltageResistor;
 
-float sensibility = 185;
+uint8_t _voltage = 0;
 
 void setup() {
   // Pin configuration
@@ -57,33 +54,24 @@ void loop() {
 
   if(_pirEnabled){
     uint16_t ldrRead = analogRead(LDR);
-    uint8_t voltage = map(ldrRead, 0, 1023, 0, 255);
-    /*Serial.print("LDR: ");
-    Serial.println(ldrRead);
-    Serial.print("Voltage: ");
-    Serial.println(voltage);*/
-    analogWrite(LED, voltage);
+    _voltage = map(ldrRead, 0, 1023, 0, 255);
+    analogWrite(LED, _voltage);
+    _current = calculateCurrent(_voltage);
   }
   else{
-    analogWrite(LED, (int)(0.2 * MAX_PWM));
+    _voltage = (uint8_t)(0.2 * MAX_PWM);
+    analogWrite(LED, _voltage);
+    _current = calculateCurrent(_voltage);
   }
 
-  for (int i = 0; i < 100; i++)
-  {
-    currentSum += analogRead(ACS);
-    delay(10);
-  }
+  Serial.print("Current: ");
+  Serial.println(_current);
+}
 
-  currentMean = currentSum / 100.0;
-  currentVoltage = map(currentMean, 0, 1023, 0, 5000);
-  current = (currentVoltage - 2500) / sensibility;
-  currentSum = 0;
-  
-  Serial.print("Corrente: ");
-  Serial.println(current);
-
-
-
+uint16_t calculateCurrent(uint8_t voltage){
+  float voltageResistor = -0.0155 + 0.0117 * voltage;
+  uint16_t current = voltageResistor * 1000000 / 330;
+  return current;
 }
 
 void pir_process(){
