@@ -13,6 +13,8 @@
 
 #define MIN_PERSON_TIME 7000
 
+#define START 0x1A
+
 // Variables
 
 // Flags PIR
@@ -22,10 +24,14 @@ bool _pirEnabled = false;
 unsigned long _now;
 unsigned long _pirTime = 0;
 
-float _current;
+uint16_t _current;
 float _voltageResistor;
 
-uint8_t _voltage = 0;
+uint8_t _pwm = 0;
+
+// Buffer
+uint8_t buffer[3];
+size_t length = 3;
 
 void setup() {
   // Pin configuration
@@ -35,7 +41,7 @@ void setup() {
 
   // Serial configuration
   Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial1.begin(115200);
 
   // Initialize process
   digitalWrite(LED, LOW);
@@ -54,22 +60,31 @@ void loop() {
 
   if(_pirEnabled){
     uint16_t ldrRead = analogRead(LDR);
-    _voltage = map(ldrRead, 0, 1023, 0, 255);
-    analogWrite(LED, _voltage);
-    _current = calculateCurrent(_voltage);
+    _pwm = map(ldrRead, 0, 1023, 0, 255);
+    analogWrite(LED, _pwm);
+    _current = calculateCurrent(_pwm);
   }
   else{
-    _voltage = (uint8_t)(0.2 * MAX_PWM);
-    analogWrite(LED, _voltage);
-    _current = calculateCurrent(_voltage);
+    _pwm = (uint8_t)(0.2 * MAX_PWM);
+    analogWrite(LED, _pwm);
+    _current = calculateCurrent(_pwm);
   }
 
+  // Print on serial
   Serial.print("Current: ");
   Serial.println(_current);
+
+  // Send to nodemcu
+  buffer[0] = START;                  // Start byte
+  buffer[1] = (_current >> 8) & 0xFF; // Most significant bits are sent first
+  buffer[2] = _current & 0xFF;        // Least significant bits are sent after
+  Serial.write(buffer, lenght);
+
+  delay(200);
 }
 
-uint16_t calculateCurrent(uint8_t voltage){
-  float voltageResistor = -0.0155 + 0.0117 * voltage;
+uint16_t calculateCurrent(uint8_t pwm){
+  float voltageResistor = -0.0155 + 0.0117 * pwm;
   uint16_t current = voltageResistor * 1000000 / 330;
   return current;
 }
