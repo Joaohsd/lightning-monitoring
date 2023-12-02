@@ -75,10 +75,10 @@ void loop() {
   Serial.println(_current);
 
   // Send to nodemcu
-  buffer[0] = START;                  // Start byte
+  buffer[0] = START;                   // Start byte
   buffer[1] = (_current >> 8) & 0xFF; // Most significant bits are sent first
   buffer[2] = _current & 0xFF;        // Least significant bits are sent after
-  Serial.write(buffer, lenght);
+  Serial1.write(buffer, length);
 
   delay(200);
 }
