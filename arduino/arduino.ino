@@ -28,10 +28,11 @@ uint16_t _current;
 float _voltageResistor;
 
 uint8_t _pwm = 0;
+uint8_t _percentage = 0;
 
 // Buffer
-uint8_t buffer[3];
-size_t length = 3;
+uint8_t buffer[4];
+size_t length = 4;
 
 void setup() {
   // Pin configuration
@@ -70,6 +71,8 @@ void loop() {
     _current = calculateCurrent(_pwm);
   }
 
+  _percentage = (float)_pwm * 100 / MAX_PWM;
+
   // Print on serial
   Serial.print("Current: ");
   Serial.println(_current);
@@ -78,6 +81,7 @@ void loop() {
   buffer[0] = START;                   // Start byte
   buffer[1] = (_current >> 8) & 0xFF; // Most significant bits are sent first
   buffer[2] = _current & 0xFF;        // Least significant bits are sent after
+  buffer[3] = _percentage & 0xFF;
   Serial1.write(buffer, length);
 
   delay(200);
