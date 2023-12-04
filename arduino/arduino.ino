@@ -76,6 +76,8 @@ void loop() {
   // Print on serial
   Serial.print("Current: ");
   Serial.println(_current);
+  Serial.print("Percentage: ");
+  Serial.println(_percentage);
 
   // Send to nodemcu
   buffer[0] = START;                   // Start byte
